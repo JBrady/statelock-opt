@@ -13,3 +13,12 @@ Purpose:
 
 This log records meaningful decisions and progress so that
 future sessions and contributors understand the project's direction.
+
+Date: 2026-03-11
+
+Summary:
+
+- Added a deterministic benchmark wedge to create a real improvement path.
+- Verified that `retrieval.top_k_final: 3 -> 4` is accepted on the current benchmark.
+- Preserved the winning bundle as `state/candidates/proof_top_k_final_4`.
+- Added a read-only proof flow so the result can be rerun without mutating the checked-in incumbent.

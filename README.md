@@ -43,6 +43,20 @@ To generate a new candidate from the incumbent plus priors:
 uv run python -m statelock_opt.proposer --output state/candidates/generated_0001
 ```
 
+## v0.1 Proof Artifact
+
+The repo now includes a stable proof candidate at
+`state/candidates/proof_top_k_final_4`.
+
+That candidate changes only `retrieval.top_k_final: 3 -> 4` and produces an accepted improvement on the current benchmark:
+
+- incumbent score: `93.7536`
+- candidate score: `96.9094`
+- delta: `+3.1558`
+- decision: `accepted`
+
+The reproducible demo flow is documented in [docs/OPT_PROOF.md](docs/OPT_PROOF.md).
+
 ## Core Repo Shape
 
 ```text
