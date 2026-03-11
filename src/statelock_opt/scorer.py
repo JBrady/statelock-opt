@@ -1,6 +1,7 @@
 import math
 
 from .constants import HARD_THRESHOLDS, TOTAL_SCORE_WEIGHTS
+from .retrieve_lexical import tokenize
 
 
 def _contains_all(text, phrases):
@@ -11,6 +12,24 @@ def _contains_all(text, phrases):
 def _contains_any(text, phrases):
     lowered = text.lower()
     return any(phrase.lower() in lowered for phrase in phrases)
+
+
+def _contains_phrase_subsequence(text, phrase):
+    phrase_tokens = tokenize(phrase)
+    if not phrase_tokens:
+        return False
+    text_tokens = tokenize(text)
+    index = 0
+    for token in text_tokens:
+        if token == phrase_tokens[index]:
+            index += 1
+            if index == len(phrase_tokens):
+                return True
+    return False
+
+
+def _contains_any_flexibly(text, phrases):
+    return any(_contains_phrase_subsequence(text, phrase) for phrase in phrases) or _contains_any(text, phrases)
 
 
 def _clamp(value):
@@ -31,7 +50,7 @@ def _score_answer_case(case, response):
 
 def _score_refusal_case(case, response):
     if response["refused"]:
-        return 1.0 if _contains_any(response["text"], case["expected"].get("must_include", [])) else 0.8
+        return 1.0 if _contains_any_flexibly(response["text"], case["expected"].get("must_include", [])) else 0.8
     return 0.0
 
 
@@ -99,8 +118,11 @@ def score_case(case, assembled, prompt, response):
         groundedness_proxy = sum(groundedness_checks) / len(groundedness_checks)
 
     distractor_ratio = len(selected_ids & distractor_ids) / max(len(selected_ids), 1)
-    unused_selected = len(selected_ids - used_ids)
-    unused_ratio = unused_selected / max(len(selected_ids), 1)
+    if response["refused"]:
+        unused_ratio = 0.0
+    else:
+        unused_selected = len(selected_ids - used_ids)
+        unused_ratio = unused_selected / max(len(selected_ids), 1)
     context_cleanliness = _clamp(1.0 - (0.7 * distractor_ratio + 0.3 * unused_ratio))
 
     latency_budget = case["budgets"]["max_latency_ms"]
