@@ -9,12 +9,17 @@ from .constants import (
     EXPLOIT_RATIO,
     INCUMBENT_DIR,
     MEMORY_DIR,
-    MUTABLE_CONFIG_FILES,
     PROMPT_ENUMS,
-    RETRIEVAL_ENUMS,
 )
 from .dedupe import fingerprint_bundle
-from .replay import load_bundle, validate_bundle, write_bundle
+from .replay import diff_bundle, load_bundle, validate_bundle, write_bundle
+
+
+BEHAVIORAL_FIELDS = {
+    "retrieval": tuple(CONFIG_LIMITS["retrieval"].keys()),
+    "memory_policy": tuple(CONFIG_LIMITS["memory_policy"].keys()),
+    "prompt_fragments": ("max_context_tokens", *PROMPT_ENUMS.keys()),
+}
 
 
 def _load_yaml(path):
@@ -47,11 +52,40 @@ def _mutate_numeric(randomizer, current, low, high):
     span = max(high - low, 1)
     if isinstance(low, int):
         step = max(1, span // 5)
-        delta = randomizer.choice([-step, -1, 1, step])
+        deltas = [-step, -1, 1, step]
     else:
         step = span / 6
-        delta = randomizer.choice([-step, -step / 2, step / 2, step])
-    return _coerce_numeric(current + delta, low, high)
+        deltas = [-step, -step / 2, step / 2, step]
+    randomizer.shuffle(deltas)
+    for delta in deltas:
+        mutated = _coerce_numeric(current + delta, low, high)
+        if mutated != current:
+            return mutated
+    return low if current != low else high
+
+
+def _mutate_field(candidate, section, field, priors, mode, randomizer):
+    current = candidate[section].get(field)
+    favored = priors.get("favored_exact_values", {}).get(f"{section}.{field}")
+
+    if field in PROMPT_ENUMS:
+        options = [option for option in sorted(PROMPT_ENUMS[field]) if option != current]
+        if not options:
+            return False
+        candidate[section][field] = favored if mode == "exploit" and favored in options else randomizer.choice(options)
+        return True
+
+    low, high = CONFIG_LIMITS[section][field]
+    if mode == "exploit" and favored is not None:
+        mutated = _coerce_numeric(float(favored), low, high)
+        if mutated != current:
+            candidate[section][field] = mutated
+            return True
+    mutated = _mutate_numeric(randomizer, current, low, high)
+    if mutated == current:
+        return False
+    candidate[section][field] = mutated
+    return True
 
 
 def _mutate_bundle(bundle, priors, randomizer):
@@ -62,29 +96,17 @@ def _mutate_bundle(bundle, priors, randomizer):
     }
 
     mode = "exploit" if randomizer.random() < EXPLOIT_RATIO else "explore"
-    sections = ["retrieval", "memory_policy", "prompt_fragments"]
-    section = randomizer.choice(sections)
-    fields = list(CONFIG_LIMITS[section].keys())
-    if section == "prompt_fragments":
-        fields.extend(PROMPT_ENUMS.keys())
-    if section == "retrieval":
-        fields.extend([key for key in RETRIEVAL_ENUMS.keys() if key not in fields])
+    no_priors = not priors.get("favored_exact_values") and not priors.get("metric_priors")
+    target_mutations = 2 if no_priors or mode == "explore" else 1
+    mutable_pairs = [(section, field) for section, fields in BEHAVIORAL_FIELDS.items() for field in fields]
+    randomizer.shuffle(mutable_pairs)
 
-    field = randomizer.choice(fields)
-    current = candidate[section].get(field)
-    favored = priors.get("favored_exact_values", {}).get(f"{section}.{field}")
-
-    if field in PROMPT_ENUMS:
-        options = sorted(PROMPT_ENUMS[field])
-        candidate[section][field] = favored if mode == "exploit" and favored in options else randomizer.choice(options)
-    elif field in RETRIEVAL_ENUMS:
-        candidate[section][field] = "lexical"
-    else:
-        low, high = CONFIG_LIMITS[section][field]
-        if mode == "exploit" and favored is not None:
-            candidate[section][field] = _coerce_numeric(float(favored), low, high)
-        else:
-            candidate[section][field] = _mutate_numeric(randomizer, current, low, high)
+    mutated_pairs = 0
+    for section, field in mutable_pairs:
+        if _mutate_field(candidate, section, field, priors, mode, randomizer):
+            mutated_pairs += 1
+        if mutated_pairs >= target_mutations:
+            break
 
     candidate["retrieval"]["strategy"] = "lexical"
     if candidate["retrieval"]["top_k_final"] > candidate["retrieval"]["top_k_pre"]:
@@ -102,6 +124,7 @@ def main():
     bad_regions = _load_yaml(MEMORY_DIR / "bad_regions.yaml")
     known_slow = _load_yaml(MEMORY_DIR / "known_slow.yaml")
     fingerprints = _load_existing_fingerprints()
+    fingerprints.add(fingerprint_bundle(incumbent))
 
     seed = len(fingerprints) + 7
     randomizer = random.Random(seed)
@@ -111,14 +134,15 @@ def main():
         attempt += 1
         candidate = _mutate_bundle(incumbent, priors, randomizer)
         validate_bundle(candidate)
+        changed_fields = diff_bundle(incumbent, candidate)
+        if not changed_fields:
+            continue
         fingerprint = fingerprint_bundle(candidate)
         if fingerprint in fingerprints:
             continue
         signature = "|".join(
-            f"{section}.{field}:{incumbent[section].get(field)}->{candidate[section].get(field)}"
-            for section in candidate
-            for field in candidate[section]
-            if candidate[section].get(field) != incumbent[section].get(field)
+            f"{field}:{change['from']}->{change['to']}"
+            for field, change in sorted(changed_fields.items())
         )
         if any(block.get("signature") == signature for block in bad_regions.get("blocked_regions", [])):
             continue

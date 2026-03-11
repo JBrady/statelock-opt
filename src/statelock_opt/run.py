@@ -3,6 +3,7 @@ import json
 import shutil
 from datetime import datetime, timezone
 from pathlib import Path
+from uuid import uuid4
 
 from .accept import compare_runs
 from .constants import ARTIFACTS_DIR, CLOSE_CALL_RERUNS, INCUMBENT_DIR, MEMORY_DIR
@@ -10,8 +11,17 @@ from .distill import append_run_record, refresh_memory
 from .replay import diff_bundle, evaluate_bundle, load_bundle, validate_bundle
 
 
-def _timestamp():
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+def _reserve_run_dir():
+    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+    for _ in range(32):
+        run_id = f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')}_{uuid4().hex[:8]}"
+        base_artifact_dir = ARTIFACTS_DIR / run_id
+        try:
+            base_artifact_dir.mkdir(parents=False, exist_ok=False)
+        except FileExistsError:
+            continue
+        return run_id, base_artifact_dir
+    raise RuntimeError("Failed to reserve a unique artifact directory.")
 
 
 def _metric_deltas(incumbent_aggregate, candidate_aggregate):
@@ -53,8 +63,7 @@ def main():
     validate_bundle(candidate_bundle)
     validate_bundle(incumbent_bundle)
 
-    run_stamp = _timestamp()
-    base_artifact_dir = ARTIFACTS_DIR / run_stamp
+    run_stamp, base_artifact_dir = _reserve_run_dir()
 
     incumbent_evals = [evaluate_bundle(incumbent_dir, f"{run_stamp}_incumbent_1", base_artifact_dir / "incumbent_1")]
     candidate_evals = [evaluate_bundle(candidate_dir, f"{run_stamp}_candidate_1", base_artifact_dir / "candidate_1")]
@@ -95,6 +104,7 @@ def main():
         "artifacts_dir": str(base_artifact_dir),
         "prompt_fragments": candidate_bundle["prompt_fragments"],
     }
+    (base_artifact_dir / "run.json").write_text(json.dumps(record, indent=2, sort_keys=True))
     append_run_record(MEMORY_DIR, record)
     refresh_memory(MEMORY_DIR)
 
