@@ -21,6 +21,20 @@ BEHAVIORAL_FIELDS = {
     "prompt_fragments": ("max_context_tokens", *PROMPT_ENUMS.keys()),
 }
 
+NO_PRIOR_FIELDS = (
+    ("retrieval", "top_k_final"),
+    ("retrieval", "min_term_overlap"),
+    ("retrieval", "max_same_source"),
+)
+
+LOW_SIGNAL_FIELDS = {
+    ("retrieval", "top_k_pre"),
+    ("memory_policy", "max_memories_total"),
+    ("memory_policy", "redundancy_penalty"),
+    ("prompt_fragments", "max_context_tokens"),
+    ("prompt_fragments", "quote_budget_tokens"),
+}
+
 
 def _load_yaml(path):
     if not path.exists():
@@ -97,8 +111,16 @@ def _mutate_bundle(bundle, priors, randomizer):
 
     mode = "exploit" if randomizer.random() < EXPLOIT_RATIO else "explore"
     no_priors = not priors.get("favored_exact_values") and not priors.get("metric_priors")
-    target_mutations = 2 if no_priors or mode == "explore" else 1
-    mutable_pairs = [(section, field) for section, fields in BEHAVIORAL_FIELDS.items() for field in fields]
+    if no_priors:
+        mutable_pairs = list(NO_PRIOR_FIELDS)
+        target_mutations = 1
+    else:
+        target_mutations = 2 if mode == "explore" else 1
+        mutable_pairs = [(section, field) for section, fields in BEHAVIORAL_FIELDS.items() for field in fields]
+        if mode == "explore":
+            mutable_pairs = [pair for pair in mutable_pairs if pair not in LOW_SIGNAL_FIELDS] + [
+                pair for pair in mutable_pairs if pair in LOW_SIGNAL_FIELDS
+            ]
     randomizer.shuffle(mutable_pairs)
 
     mutated_pairs = 0
