@@ -19,6 +19,7 @@ Date: 2026-03-11
 Summary:
 
 - Added a deterministic benchmark wedge to create a real improvement path.
+- Completed a proposer audit to identify the best nearby candidate family.
 - Verified that `retrieval.top_k_final: 3 -> 4` is accepted on the current benchmark.
 - Preserved the winning bundle as `state/candidates/proof_top_k_final_4`.
 - Added a read-only proof flow so the result can be rerun without mutating the checked-in incumbent.
