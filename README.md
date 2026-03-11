@@ -13,6 +13,28 @@ The system is intentionally narrow:
 - strict accept/reject loop
 - distilled experiment memory
 
+## Status
+
+statelock-opt v0.1 establishes a minimal proof that the optimizer can:
+
+• evaluate candidate retrieval/context policies offline  
+• reject weak candidates under strict scoring  
+• accept a genuinely better candidate  
+
+The reproducible experiment demonstrating this behavior is documented in:
+
+docs/OPT_PROOF.md
+
+## Proof Result (v0.1)
+
+Incumbent score: 93.7536  
+Winning candidate: retrieval.top_k_final: 3 → 4  
+Candidate score: 96.9094  
+Delta: +3.1558  
+Decision: accepted
+
+See docs/OPT_PROOF.md for the full reproducible experiment.
+
 ## Why This Exists
 
 StateLock-style memory systems often fail because of policy choices, not because the model needs retraining. Common failure modes are:
