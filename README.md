@@ -1,6 +1,8 @@
 # StateLock Local Context Optimizer
 
-This repo is a local, eval-driven optimizer for StateLock-style memory systems. It does not train models. It improves a bounded retrieval, context-assembly, and prompt-fragment policy loop using offline replay on a Mac mini.
+`statelock-opt` is a local, eval-driven optimizer for StateLock-style memory systems. It does not train models. It tests bounded retrieval, context-assembly, and prompt-fragment policies offline, scores them deterministically, and decides whether to accept or reject a candidate configuration.
+
+The problem it solves is simple: memory systems often fail because the retrieval or context policy is wrong, not because the underlying model needs retraining. This repo exists to prove that those policy decisions can be improved through offline replay.
 
 The system is intentionally narrow:
 - offline replay only
@@ -45,17 +47,62 @@ uv run python -m statelock_opt.proposer --output state/candidates/generated_0001
 
 ## v0.1 Proof Artifact
 
-The repo now includes a stable proof candidate at
-`state/candidates/proof_top_k_final_4`.
+The repo includes a stable proof candidate at `state/candidates/proof_top_k_final_4`.
 
-That candidate changes only `retrieval.top_k_final: 3 -> 4` and produces an accepted improvement on the current benchmark:
+The optimizer tests candidate retrieval and context policies offline against a fixed benchmark. On the current proof benchmark:
 
 - incumbent score: `93.7536`
+- discovered winning change: `retrieval.top_k_final: 3 -> 4`
 - candidate score: `96.9094`
 - delta: `+3.1558`
 - decision: `accepted`
 
 The reproducible demo flow is documented in [docs/OPT_PROOF.md](docs/OPT_PROOF.md).
+
+## Reproduce the Proof
+
+Evaluate incumbent:
+
+```bash
+uv run python - <<'PY'
+from pathlib import Path
+from statelock_opt.replay import evaluate_bundle
+
+result = evaluate_bundle(
+    Path("state/incumbent"),
+    "proof_incumbent",
+    Path("artifacts/reports/proof_incumbent"),
+)
+print(round(result["aggregate"]["total_score"], 4))
+PY
+```
+
+Evaluate winning candidate:
+
+```bash
+uv run python - <<'PY'
+from pathlib import Path
+from statelock_opt.replay import evaluate_bundle
+
+result = evaluate_bundle(
+    Path("state/candidates/proof_top_k_final_4"),
+    "proof_candidate",
+    Path("artifacts/reports/proof_candidate"),
+)
+print(round(result["aggregate"]["total_score"], 4))
+PY
+```
+
+Run optimizer acceptance check:
+
+```bash
+tmpdir=$(mktemp -d)
+cp -R state/incumbent "$tmpdir/incumbent"
+uv run python -m statelock_opt.run \
+  --incumbent "$tmpdir/incumbent" \
+  --candidate state/candidates/proof_top_k_final_4
+rm -rf "$tmpdir"
+```
 
 ## Core Repo Shape
 

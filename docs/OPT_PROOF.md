@@ -14,6 +14,28 @@ Accepted improvement:
 - delta: `+3.1558`
 - decision: `accepted`
 
+## Results
+
+| Candidate | Config change | Score | Delta vs incumbent | Accepted | Reason |
+| --- | --- | ---: | ---: | --- | --- |
+| `state/incumbent` | baseline | 93.7536 | 0.0000 | baseline | incumbent reference |
+| `state/candidates/candidate_0001` | `memory_policy.max_items_per_type: 3 -> 2` | 91.2645 | -2.4891 | no | `unsupported_answer_rate above threshold` |
+| `state/candidates/generated_0001` | no config change | 93.7536 | 0.0000 | no | `unsupported_answer_rate above threshold` |
+| `state/candidates/proof_top_k_final_4` | `retrieval.top_k_final: 3 -> 4` | 96.9094 | +3.1558 | yes | `accepted` |
+
+Experimental setup:
+
+- offline replay benchmark
+- lexical-only retrieval
+- deterministic scoring
+- bounded config surface
+
+### Note: Acceptance Reason Ordering
+
+The optimizer currently reports the first failing gate in the acceptance pipeline. That can produce unintuitive reasons for no-op candidates. For example, an identical bundle may still report a threshold failure such as `unsupported_answer_rate above threshold` instead of a clearer reason like “no diff from incumbent.”
+
+Possible improvement: reorder acceptance checks so identical or zero-delta candidates return a clearer reason such as `no diff from incumbent` or `score delta below minimum threshold` before reporting other failing thresholds.
+
 ## Benchmark Wedge
 
 The proof depends on three deterministic benchmark cases added to `evals/dataset.jsonl`:
@@ -24,6 +46,8 @@ The proof depends on three deterministic benchmark cases added to `evals/dataset
 
 These cases make the benchmark discriminative without loosening thresholds or expanding scope.
 
+The key proof case is `case_021`. With the incumbent policy, `top_k_final=3` stops before the uncertainty record is selected, so the system answers too early from incomplete evidence. With `top_k_final=4`, the uncertainty record is included, the behavior changes in the intended direction, and the candidate avoids the incumbent failure.
+
 ## Why This Proves The Loop Works
 
 This proof matters because the repo now demonstrates all three parts of a trustworthy optimizer loop:
@@ -33,6 +57,12 @@ This proof matters because the repo now demonstrates all three parts of a trustw
 - a better candidate is accepted under the current strict scoring and acceptance rules
 
 The accepted candidate is not a prompt rewrite or a broader architecture change. It is a bounded lexical retrieval change discovered within the existing MVP surface.
+
+More concretely:
+
+- the incumbent fails the wedge because it selects too few records in the critical case
+- `top_k_final=4` fixes that behavior without changing the rest of the bundle
+- the scorer credits the resulting improvement strongly enough for the optimizer to accept it under the current thresholds
 
 ## Read-Only Demo
 
