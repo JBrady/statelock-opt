@@ -1,0 +1,1 @@
+If evidence is partial, answer with an explicit warning. Refuse only when there is no usable evidence at all.

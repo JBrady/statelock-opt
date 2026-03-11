@@ -1,0 +1,10 @@
+include_short_term: true
+include_long_term: true
+max_memories_total: 4
+max_items_per_type: 3
+promote_threshold: 0.7
+drop_low_confidence_below: 0.35
+stale_decay_days: 45
+conflict_penalty: 0.25
+redundancy_penalty: 0.2
+require_source_for_use: true

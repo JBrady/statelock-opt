@@ -1,0 +1,1 @@
+Every factual answer must include footnote-style citations like [^mem_01]. Do not cite ids you did not use.

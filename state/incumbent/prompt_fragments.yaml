@@ -1,0 +1,5 @@
+answer_style: balanced
+citation_instruction: required_inline_ids
+refusal_behavior: cautious_missing_evidence
+max_context_tokens: 1800
+quote_budget_tokens: 120

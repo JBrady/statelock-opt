@@ -1,0 +1,1 @@
+Refuse when evidence is missing or conflicting. If evidence is partial but directionally clear, say so explicitly and avoid overclaiming.

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "id",
+    "query",
+    "query_timestamp",
+    "memory_bank",
+    "expected_behavior",
+    "expected",
+    "distractor_ids",
+    "budgets"
+  ],
+  "properties": {
+    "id": {"type": "string"},
+    "query": {"type": "string"},
+    "query_timestamp": {"type": "string"},
+    "expected_behavior": {
+      "type": "string",
+      "enum": ["answer", "answer_with_caution", "refuse"]
+    },
+    "memory_bank": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "text",
+          "source",
+          "timestamp",
+          "confidence",
+          "kind",
+          "memory_type"
+        ],
+        "properties": {
+          "id": {"type": "string"},
+          "text": {"type": "string"},
+          "source": {"type": "string"},
+          "timestamp": {"type": "string"},
+          "confidence": {"type": "number"},
+          "kind": {"type": "string"},
+          "memory_type": {"type": "string"},
+          "contradicts_ids": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        }
+      }
+    },
+    "expected": {
+      "type": "object",
+      "required": [
+        "must_include",
+        "must_not_include",
+        "required_support_ids",
+        "forbidden_support_ids"
+      ]
+    },
+    "distractor_ids": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "budgets": {
+      "type": "object",
+      "required": [
+        "max_latency_ms",
+        "max_prompt_tokens",
+        "max_output_tokens"
+      ]
+    }
+  }
+}
