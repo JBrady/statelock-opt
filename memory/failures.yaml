@@ -1,1 +1,7 @@
-patterns: []
+patterns:
+- reason: false_refusal_rate regressed beyond tolerance
+  run_id: 20260311T075652Z
+  signature: memory_policy.max_items_per_type:3->2
+- reason: score delta below minimum acceptance threshold
+  run_id: 20260311T075652Z
+  signature: ''
