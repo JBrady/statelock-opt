@@ -35,12 +35,20 @@ Out of scope by default:
 
 - README.md
 - docs/statelock_vision.md
+- docs/OPT_architecture.md
+- docs/OPT_repo_snapshot.md
 - docs/OPT_HARDENING_AUDIT.md
 - docs/OPT_PROOF.md
+- docs/OPT_EVAL_STRATEGY.md
+- docs/OPT_MEMORY_HARDENING.md
+- docs/OPT_ENGINE_CONTRACT_SKETCH.md
 - docs/OPT_BUILD_LOG.md
 - docs/STATELOCK-OPT_SESSION_2026_03_11_CODEX_BOOTSTRAP.md
 - evals/dataset.jsonl
+- evals/schema.json
+- tests/test_hardening_regressions.py
 - src/statelock_opt/run.py
+- src/statelock_opt/replay.py
 - src/statelock_opt/proposer.py
 - src/statelock_opt/scorer.py
 - state/incumbent/
@@ -62,6 +70,9 @@ If the user says `Bootstrap yourself`, or says to read `AGENTS.md` and follow th
    - `docs/OPT_architecture.md`
    - `docs/OPT_repo_snapshot.md`
    - `docs/OPT_HARDENING_AUDIT.md`
+   - `docs/OPT_EVAL_STRATEGY.md`
+   - `docs/OPT_MEMORY_HARDENING.md`
+   - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
    - `README.md`
    - `docs/OPT_PROOF.md`
    - `docs/OPT_BUILD_LOG.md`
@@ -77,7 +88,10 @@ If the user says `Bootstrap yourself`, or says to read `AGENTS.md` and follow th
    - `src/statelock_opt/proposer.py`
 4. Inspect the current benchmark surface:
    - `evals/dataset.jsonl`
-5. Summarize the current repo state, milestone, constraints, and likely next step before making changes.
+   - `evals/schema.json`
+5. Inspect the current regression guardrails:
+   - `tests/test_hardening_regressions.py`
+6. Summarize the current repo state, milestone, constraints, and likely next step before making changes.
 
 The goal of bootstrap is to rehydrate both project context and implementation context so a new session can work effectively without re-deriving the repo from scratch.
 
@@ -86,6 +100,7 @@ The goal of bootstrap is to rehydrate both project context and implementation co
 When changing behavior, verify with repo-grounded commands.
 Prefer:
 - `uv run python -m compileall src`
+- `uv run python -m unittest discover -s tests -v`
 - candidate evaluation via `evaluate_bundle`
 - acceptance check via `python -m statelock_opt.run`
 

@@ -55,6 +55,7 @@ Current repo work is focused on post-proof hardening rather than new optimizer b
   - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 - `README.md`: public project overview and reproducible proof commands
 - `program.md`: operational instructions for the optimizer loop
+- `tests/`: regression checks protecting proof invariants and proposer stability
 
 ### Tooling
 
@@ -203,6 +204,7 @@ Post-hardening eval integrity notes:
 
 - runtime validates dataset rows against `schema.json`
 - dataset identity is derived from the raw bytes of `dataset.jsonl` and `schema.json`
+- one shared dataset identity is captured once per acceptance run and reused for both incumbent and candidate evaluation
 - optional `case_metadata` exists for taxonomy and proof-role scaffolding only
 
 ### `memory/`
@@ -251,6 +253,30 @@ Typical report directory contents:
 - `cases.json`
 
 `summary.json` now also carries additive artifact metadata for dataset identity, bundle identity, and artifact format version.
+
+Typical top-level `run.json` contents now also include:
+
+- `artifact_format_version`
+- shared dataset identity
+- incumbent bundle identity
+- candidate bundle identity
+
+That metadata is provenance-only and is not part of scoring or acceptance semantics.
+
+### `tests/`
+
+Repo-grounded regression coverage now includes:
+
+- `tests/test_hardening_regressions.py`
+
+The current regression suite protects:
+
+- raw-byte dataset and schema fingerprinting
+- proof-case order and per-case score preservation
+- incumbent and proof-candidate aggregate-score preservation
+- final proof accept/reject preservation
+- proposer candidate-selection stability for the checked-in memory state
+- structured lesson promotion in a temporary memory directory
 
 Typical run directory contents:
 

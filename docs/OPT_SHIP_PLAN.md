@@ -45,6 +45,7 @@ The post-proof hardening track may then strengthen:
 - dataset growth scaffolding
 - experiment-memory structure
 - future engine-facing output contracts
+- proof-preservation regression checks
 
 ## Current Priorities
 
