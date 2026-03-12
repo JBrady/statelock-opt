@@ -47,11 +47,13 @@ Current repo work is focused on post-proof hardening rather than new optimizer b
 
 - `artifacts/reports/`: ad hoc evaluation outputs
 - `artifacts/runs/`: acceptance-run artifacts
+- `artifacts/registry/`: append-only experiment index
 - `docs/`: proof notes, build log, ship plan, bootstrap notes, and now repo-level reference docs
 - new hardening references:
   - `docs/OPT_HARDENING_AUDIT.md`
   - `docs/OPT_EVAL_STRATEGY.md`
   - `docs/OPT_MEMORY_HARDENING.md`
+  - `docs/OPT_EXPERIMENT_REGISTRY.md`
   - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 - `README.md`: public project overview and reproducible proof commands
 - `program.md`: operational instructions for the optimizer loop
@@ -241,6 +243,7 @@ Artifacts are divided into:
 
 - `artifacts/reports/`: one-off evaluation outputs
 - `artifacts/runs/`: acceptance-run directories created by `python -m statelock_opt.run`
+- `artifacts/registry/`: additive run-summary index
 
 Observed counts on March 12, 2026:
 
@@ -262,6 +265,13 @@ Typical top-level `run.json` contents now also include:
 - candidate bundle identity
 
 That metadata is provenance-only and is not part of scoring or acceptance semantics.
+
+The experiment registry now also appends one structured record per completed run to:
+
+- `artifacts/registry/experiments.jsonl`
+
+That registry is an audit/index layer only.
+It does not replace `run.json` or `memory/runs.jsonl`.
 
 ### `tests/`
 

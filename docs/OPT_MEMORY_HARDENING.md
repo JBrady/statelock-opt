@@ -26,6 +26,13 @@ Only a subset of those files influence proposer behavior today:
 
 That must remain true in this hardening pass.
 
+The experiment registry is separate from this memory layer.
+
+- `memory/runs.jsonl` feeds distillation
+- `artifacts/registry/experiments.jsonl` is an additive audit/index artifact
+
+The registry must not become a proposer input in this pass.
+
 ## Lesson Schema
 
 Promoted lessons in `lessons.jsonl` now use a more explicit structure:

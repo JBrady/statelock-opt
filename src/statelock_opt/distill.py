@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 from .constants import LARGE_WIN_DELTA, MAX_ACTIVE_LESSONS, MEMORY_DIR
+from .signatures import change_signature
 
 
 def _load_jsonl(path):
@@ -28,14 +29,6 @@ def append_run_record(memory_dir, record):
     existing.append(record)
     _write_jsonl(path, existing)
     return existing
-
-
-def _change_signature(changed_fields):
-    parts = []
-    for key in sorted(changed_fields):
-        change = changed_fields[key]
-        parts.append(f"{key}:{change['from']}->{change['to']}")
-    return "|".join(parts)
 
 
 def _lesson_scope(grouped_runs):
@@ -86,7 +79,7 @@ def refresh_memory(memory_dir):
     failure_groups = defaultdict(list)
 
     for run in runs:
-        signature = _change_signature(run.get("changed_fields", {}))
+        signature = change_signature(run.get("changed_fields", {}))
         if not signature:
             continue
         if run["decision"]["accepted"]:
@@ -146,7 +139,7 @@ def refresh_memory(memory_dir):
         if run["metric_deltas"].get("false_refusal_rate", 0.0) > 0 and run["metric_deltas"].get("unsupported_answer_rate", 0.0) < 0:
             tradeoffs["tradeoffs"].append(
                 {
-                    "signature": _change_signature(run.get("changed_fields", {})),
+                    "signature": change_signature(run.get("changed_fields", {})),
                     "description": "stricter refusal reduced unsupported answers but increased false refusals",
                     "run_id": run["run_id"],
                 }
@@ -154,7 +147,7 @@ def refresh_memory(memory_dir):
         if run["metric_deltas"].get("latency_score", 0.0) < 0 and run["metric_deltas"].get("correctness", 0.0) > 0:
             tradeoffs["tradeoffs"].append(
                 {
-                    "signature": _change_signature(run.get("changed_fields", {})),
+                    "signature": change_signature(run.get("changed_fields", {})),
                     "description": "broader retrieval improved correctness but hurt latency",
                     "run_id": run["run_id"],
                 }
@@ -163,7 +156,7 @@ def refresh_memory(memory_dir):
     for run in rejected_runs:
         failures["patterns"].append(
             {
-                "signature": _change_signature(run.get("changed_fields", {})),
+                "signature": change_signature(run.get("changed_fields", {})),
                 "reason": run["decision"]["reason"],
                 "run_id": run["run_id"],
             }

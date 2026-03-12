@@ -82,6 +82,7 @@ Those topics now live in:
 - `docs/OPT_HARDENING_AUDIT.md`
 - `docs/OPT_EVAL_STRATEGY.md`
 - `docs/OPT_MEMORY_HARDENING.md`
+- `docs/OPT_EXPERIMENT_REGISTRY.md`
 - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
 ## Proof Still Holds After Hardening

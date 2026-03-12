@@ -1,6 +1,7 @@
 import argparse
 import json
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -8,6 +9,7 @@ from uuid import uuid4
 from .accept import compare_runs
 from .constants import ARTIFACTS_DIR, ARTIFACT_FORMAT_VERSION, CLOSE_CALL_RERUNS, INCUMBENT_DIR, MEMORY_DIR
 from .distill import append_run_record, refresh_memory
+from .registry import append_registry_record, build_registry_record, load_jsonl_rows
 from .replay import diff_bundle, evaluate_bundle, load_bundle, load_dataset_bundle, validate_bundle
 
 
@@ -141,8 +143,35 @@ def main():
         "prompt_fragments": candidate_bundle["prompt_fragments"],
     }
     (base_artifact_dir / "run.json").write_text(json.dumps(record, indent=2, sort_keys=True))
+    pre_lessons = []
+    post_lessons = []
+    lesson_attribution_failed = False
+    try:
+        pre_lessons = load_jsonl_rows(MEMORY_DIR / "lessons.jsonl")
+    except Exception:
+        lesson_attribution_failed = True
     append_run_record(MEMORY_DIR, record)
     refresh_memory(MEMORY_DIR)
+    try:
+        post_lessons = load_jsonl_rows(MEMORY_DIR / "lessons.jsonl")
+    except Exception:
+        lesson_attribution_failed = True
+
+    registry_path = ARTIFACTS_DIR.parent / "registry" / "experiments.jsonl"
+    try:
+        registry_record = build_registry_record(
+            record,
+            incumbent_eval,
+            candidate_eval,
+            pre_lessons,
+            post_lessons,
+            lesson_attribution_failed=lesson_attribution_failed,
+        )
+        appended = append_registry_record(registry_path, registry_record)
+        if not appended:
+            print(f"Registry append skipped for duplicate run_id {run_stamp}.", file=sys.stderr)
+    except Exception as exc:
+        print(f"Registry append failed for run {run_stamp}: {exc}", file=sys.stderr)
 
     summary = {
         "accepted": decision["accepted"],

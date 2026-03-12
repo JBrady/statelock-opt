@@ -18,9 +18,10 @@ Recommended reading order for this subsystem:
 4. `docs/OPT_PROOF.md`
 5. `docs/OPT_EVAL_STRATEGY.md`
 6. `docs/OPT_MEMORY_HARDENING.md`
-7. `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
-8. `docs/OPT_BUILD_LOG.md`
-9. `docs/OPT_SHIP_PLAN.md`
+7. `docs/OPT_EXPERIMENT_REGISTRY.md`
+8. `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
+9. `docs/OPT_BUILD_LOG.md`
+10. `docs/OPT_SHIP_PLAN.md`
 
 ## Architectural Summary
 
@@ -33,6 +34,7 @@ The system is built around a closed offline loop:
 5. Aggregate metrics are compared against the incumbent.
 6. The candidate is accepted or rejected.
 7. Run history is distilled into lightweight experiment memory.
+8. Completed runs are indexed into a lightweight experiment registry.
 
 The core entry points are:
 
@@ -115,6 +117,15 @@ The optimizer keeps lightweight local memory under `memory/`:
 - `known_slow.yaml`: slow patterns
 - `tradeoffs.yaml`: recurring metric tradeoffs
 - `failures.yaml`: recorded failure patterns
+
+### 5. Experiment Registry
+
+The optimizer also keeps an additive audit/index artifact at:
+
+- `artifacts/registry/experiments.jsonl`
+
+This registry summarizes completed runs and points back to canonical artifacts.
+It does not replace `run.json` and is not a scoring, acceptance, proposer, or memory-refresh input in v1.
 
 ## End-to-End Evaluation Flow
 
@@ -296,6 +307,7 @@ Close-call reruns only happen if a candidate is tentatively accepted and the del
 - writes `run.json`
 - appends the run to experiment memory
 - refreshes distilled memory
+- appends a registry summary entry under `artifacts/registry/`
 - if accepted, copies the candidate bundle into the incumbent directory and snapshots the prior incumbent
 
 `run.json` now carries additive artifact metadata such as:
@@ -347,6 +359,7 @@ Additional reference docs introduced in the hardening pass:
 - `docs/OPT_HARDENING_AUDIT.md`
 - `docs/OPT_EVAL_STRATEGY.md`
 - `docs/OPT_MEMORY_HARDENING.md`
+- `docs/OPT_EXPERIMENT_REGISTRY.md`
 - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
 ## Determinism and Reproducibility
