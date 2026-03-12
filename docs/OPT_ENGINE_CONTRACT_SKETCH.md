@@ -16,6 +16,7 @@ Today, `statelock-opt` emits:
 - per-eval `cases.json`
 - top-level `run.json`
 - experiment-memory side outputs under `memory/`
+- an additive experiment registry under `artifacts/registry/experiments.jsonl`
 
 The most integration-friendly artifacts are:
 
@@ -23,6 +24,7 @@ The most integration-friendly artifacts are:
 - `summary.json`
 
 `cases.json` should still be treated as detailed debug/audit output rather than the primary interface.
+The experiment registry should also be treated as a local audit/index layer rather than the primary engine-facing interface.
 
 ## Current Artifact Metadata
 

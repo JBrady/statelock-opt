@@ -93,6 +93,7 @@ Supporting hardening references:
 - [docs/OPT_HARDENING_AUDIT.md](docs/OPT_HARDENING_AUDIT.md)
 - [docs/OPT_EVAL_STRATEGY.md](docs/OPT_EVAL_STRATEGY.md)
 - [docs/OPT_MEMORY_HARDENING.md](docs/OPT_MEMORY_HARDENING.md)
+- [docs/OPT_EXPERIMENT_REGISTRY.md](docs/OPT_EXPERIMENT_REGISTRY.md)
 - [docs/OPT_ENGINE_CONTRACT_SKETCH.md](docs/OPT_ENGINE_CONTRACT_SKETCH.md)
 
 ## Post-Proof Hardening Now Present
@@ -105,8 +106,10 @@ The repo now includes the first hardening pass around the proof artifact:
 - `summary.json` and `run.json` now carry additive, non-semantic provenance metadata such as `artifact_format_version`, dataset identity, and bundle identity
 - regression checks preserve proof invariants for case count, case order, per-case scores, aggregate scores, and final accept/reject outcome
 - proposer behavior is still expected to remain unchanged for the same checked-in memory state
+- a lightweight append-only registry now records structured run summaries under `artifacts/registry/experiments.jsonl`
 
 The hardening regression suite lives in `tests/test_hardening_regressions.py`.
+The experiment-registry coverage lives in `tests/test_experiment_registry.py`.
 
 Recommended verification after behavior changes:
 
@@ -173,6 +176,8 @@ src/statelock_opt/       replay, scoring, proposing, acceptance, distillation
 artifacts/               per-run outputs and reports
 program.md               agent instructions for the optimizer loop
 ```
+
+The `artifacts/` tree now also includes `artifacts/registry/experiments.jsonl`, an append-only index of completed runs.
 
 ## Design Principles
 
