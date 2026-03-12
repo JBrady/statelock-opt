@@ -64,6 +64,26 @@ More concretely:
 - `top_k_final=4` fixes that behavior without changing the rest of the bundle
 - the scorer credits the resulting improvement strongly enough for the optimizer to accept it under the current thresholds
 
+## Post-Proof Hardening
+
+The core v0.1 proof is intentionally narrow and already complete.
+
+What remains after the proof is not “invent more optimizer behavior.”
+What remains is hardening work around:
+
+- eval integrity
+- artifact provenance
+- dataset scaffolding
+- experiment-memory clarity
+- future integration sketches
+
+Those topics now live in:
+
+- `docs/OPT_HARDENING_AUDIT.md`
+- `docs/OPT_EVAL_STRATEGY.md`
+- `docs/OPT_MEMORY_HARDENING.md`
+- `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
+
 ## Read-Only Demo
 
 These commands reproduce the proof without modifying the checked-in incumbent.

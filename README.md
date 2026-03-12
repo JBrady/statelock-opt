@@ -23,6 +23,9 @@ statelock-opt v0.1 establishes a minimal proof that the optimizer can:
 • reject weak candidates under strict scoring  
 • accept a genuinely better candidate  
 
+That core proof is complete.
+Current work focuses on post-proof hardening: eval integrity, reproducibility, documentation alignment, and safer extension points.
+
 The reproducible experiment demonstrating this behavior is documented in:
 
 docs/OPT_PROOF.md
@@ -82,6 +85,15 @@ The optimizer tests candidate retrieval and context policies offline against a f
 - decision: `accepted`
 
 The reproducible demo flow is documented in [docs/OPT_PROOF.md](docs/OPT_PROOF.md).
+
+Supporting hardening references:
+
+- [docs/OPT_architecture.md](docs/OPT_architecture.md)
+- [docs/OPT_repo_snapshot.md](docs/OPT_repo_snapshot.md)
+- [docs/OPT_HARDENING_AUDIT.md](docs/OPT_HARDENING_AUDIT.md)
+- [docs/OPT_EVAL_STRATEGY.md](docs/OPT_EVAL_STRATEGY.md)
+- [docs/OPT_MEMORY_HARDENING.md](docs/OPT_MEMORY_HARDENING.md)
+- [docs/OPT_ENGINE_CONTRACT_SKETCH.md](docs/OPT_ENGINE_CONTRACT_SKETCH.md)
 
 ## Reproduce the Proof
 

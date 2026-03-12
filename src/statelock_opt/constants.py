@@ -3,10 +3,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 DATASET_PATH = ROOT / "evals" / "dataset.jsonl"
+EVAL_SCHEMA_PATH = ROOT / "evals" / "schema.json"
 INCUMBENT_DIR = ROOT / "state" / "incumbent"
 MEMORY_DIR = ROOT / "memory"
 PROMPTS_DIR = ROOT / "prompts"
 ARTIFACTS_DIR = ROOT / "artifacts" / "runs"
+ARTIFACT_FORMAT_VERSION = 2
 
 MIN_ACCEPT_DELTA = 1.5
 CLOSE_CALL_MAX_DELTA = 3.0

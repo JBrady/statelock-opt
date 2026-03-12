@@ -6,9 +6,9 @@ from pathlib import Path
 from uuid import uuid4
 
 from .accept import compare_runs
-from .constants import ARTIFACTS_DIR, CLOSE_CALL_RERUNS, INCUMBENT_DIR, MEMORY_DIR
+from .constants import ARTIFACTS_DIR, ARTIFACT_FORMAT_VERSION, CLOSE_CALL_RERUNS, INCUMBENT_DIR, MEMORY_DIR
 from .distill import append_run_record, refresh_memory
-from .replay import diff_bundle, evaluate_bundle, load_bundle, validate_bundle
+from .replay import diff_bundle, evaluate_bundle, load_bundle, load_dataset_bundle, validate_bundle
 
 
 def _reserve_run_dir():
@@ -49,6 +49,18 @@ def _copy_bundle(source_dir, dest_dir):
         shutil.copy2(source_dir / filename, dest_dir / filename)
 
 
+def _validate_dataset_identity(expected_identity, evaluations, label):
+    for evaluation in evaluations:
+        if evaluation["dataset_identity"] != expected_identity:
+            raise RuntimeError(f"{label} evaluation dataset identity drifted within a single run.")
+
+
+def _ensure_matching_dataset_identity(incumbent_evals, candidate_evals):
+    for incumbent_eval, candidate_eval in zip(incumbent_evals, candidate_evals):
+        if incumbent_eval["dataset_identity"] != candidate_eval["dataset_identity"]:
+            raise RuntimeError("Incumbent and candidate dataset identity mismatch in a single acceptance run.")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run the StateLock optimizer against a candidate config bundle.")
     parser.add_argument("--candidate", required=True, help="Path to the candidate bundle directory")
@@ -62,11 +74,17 @@ def main():
     incumbent_bundle = load_bundle(incumbent_dir)
     validate_bundle(candidate_bundle)
     validate_bundle(incumbent_bundle)
+    dataset_bundle = load_dataset_bundle()
+    dataset_identity = dataset_bundle["identity"]
 
     run_stamp, base_artifact_dir = _reserve_run_dir()
 
-    incumbent_evals = [evaluate_bundle(incumbent_dir, f"{run_stamp}_incumbent_1", base_artifact_dir / "incumbent_1")]
-    candidate_evals = [evaluate_bundle(candidate_dir, f"{run_stamp}_candidate_1", base_artifact_dir / "candidate_1")]
+    incumbent_evals = [
+        evaluate_bundle(incumbent_dir, f"{run_stamp}_incumbent_1", base_artifact_dir / "incumbent_1", dataset_bundle=dataset_bundle)
+    ]
+    candidate_evals = [
+        evaluate_bundle(candidate_dir, f"{run_stamp}_candidate_1", base_artifact_dir / "candidate_1", dataset_bundle=dataset_bundle)
+    ]
 
     decision = compare_runs(incumbent_evals, candidate_evals)
     if decision["accepted"] and decision["close_call"]:
@@ -74,12 +92,26 @@ def main():
         candidate_evals = []
         for index in range(CLOSE_CALL_RERUNS):
             incumbent_evals.append(
-                evaluate_bundle(incumbent_dir, f"{run_stamp}_incumbent_{index+1}", base_artifact_dir / f"incumbent_{index+1}")
+                evaluate_bundle(
+                    incumbent_dir,
+                    f"{run_stamp}_incumbent_{index+1}",
+                    base_artifact_dir / f"incumbent_{index+1}",
+                    dataset_bundle=dataset_bundle,
+                )
             )
             candidate_evals.append(
-                evaluate_bundle(candidate_dir, f"{run_stamp}_candidate_{index+1}", base_artifact_dir / f"candidate_{index+1}")
+                evaluate_bundle(
+                    candidate_dir,
+                    f"{run_stamp}_candidate_{index+1}",
+                    base_artifact_dir / f"candidate_{index+1}",
+                    dataset_bundle=dataset_bundle,
+                )
             )
         decision = compare_runs(incumbent_evals, candidate_evals)
+
+    _validate_dataset_identity(dataset_identity, incumbent_evals, "Incumbent")
+    _validate_dataset_identity(dataset_identity, candidate_evals, "Candidate")
+    _ensure_matching_dataset_identity(incumbent_evals, candidate_evals)
 
     incumbent_eval = incumbent_evals[-1]
     candidate_eval = candidate_evals[-1]
@@ -92,9 +124,13 @@ def main():
         _copy_bundle(candidate_dir, incumbent_dir)
 
     record = {
+        "artifact_format_version": ARTIFACT_FORMAT_VERSION,
         "run_id": run_stamp,
         "candidate_path": str(candidate_dir),
         "fingerprint": candidate_eval["fingerprint"],
+        "dataset_identity": dataset_identity,
+        "incumbent_bundle_identity": incumbent_eval["bundle_identity"],
+        "candidate_bundle_identity": candidate_eval["bundle_identity"],
         "changed_fields": changed_fields,
         "aggregate": candidate_eval["aggregate"],
         "incumbent_aggregate": incumbent_eval["aggregate"],

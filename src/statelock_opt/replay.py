@@ -1,12 +1,24 @@
+import copy
+import hashlib
 import json
 import shutil
 import time
 from pathlib import Path
 
 import yaml
+from jsonschema import Draft202012Validator
 
 from .assemble import assemble_context
-from .constants import CONFIG_LIMITS, DATASET_PATH, INCUMBENT_DIR, MUTABLE_CONFIG_FILES, PROMPT_ENUMS, RETRIEVAL_ENUMS
+from .constants import (
+    ARTIFACT_FORMAT_VERSION,
+    CONFIG_LIMITS,
+    DATASET_PATH,
+    EVAL_SCHEMA_PATH,
+    INCUMBENT_DIR,
+    MUTABLE_CONFIG_FILES,
+    PROMPT_ENUMS,
+    RETRIEVAL_ENUMS,
+)
 from .dedupe import fingerprint_bundle
 from .model_adapter import generate_response
 from .prompt_render import render_prompt
@@ -54,14 +66,61 @@ def validate_bundle(bundle):
         raise ValueError("top_k_final must be <= top_k_pre")
 
 
-def load_dataset(dataset_path=DATASET_PATH):
+def _sha256_bytes(payload):
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _parse_dataset_rows(raw_dataset):
     rows = []
-    for line in Path(dataset_path).read_text().splitlines():
-        line = line.strip()
-        if not line:
+    text = raw_dataset.decode("utf-8")
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        if not line.strip():
             continue
-        rows.append(json.loads(line))
+        try:
+            rows.append(json.loads(line))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"Dataset JSON decode failed on line {line_number}: {exc.msg}") from exc
     return rows
+
+
+def _validate_dataset_rows(rows, schema):
+    validator = Draft202012Validator(schema)
+    seen_case_ids = set()
+    for index, row in enumerate(rows, start=1):
+        errors = sorted(validator.iter_errors(row), key=lambda item: item.json_path)
+        if errors:
+            first = errors[0]
+            raise ValueError(f"Dataset schema validation failed for row {index}: {first.message}")
+        case_id = row["id"]
+        if case_id in seen_case_ids:
+            raise ValueError(f"Duplicate dataset case id: {case_id}")
+        seen_case_ids.add(case_id)
+
+
+def load_dataset_bundle(dataset_path=DATASET_PATH, schema_path=EVAL_SCHEMA_PATH):
+    dataset_path = Path(dataset_path)
+    schema_path = Path(schema_path)
+    raw_dataset = dataset_path.read_bytes()
+    raw_schema = schema_path.read_bytes()
+    rows = _parse_dataset_rows(raw_dataset)
+    schema = json.loads(raw_schema.decode("utf-8"))
+    _validate_dataset_rows(rows, schema)
+    case_ids = [row["id"] for row in rows]
+    return {
+        "rows": rows,
+        "identity": {
+            "dataset_path": str(dataset_path.resolve()),
+            "dataset_sha256": _sha256_bytes(raw_dataset),
+            "schema_path": str(schema_path.resolve()),
+            "schema_sha256": _sha256_bytes(raw_schema),
+            "case_count": len(rows),
+            "case_ids": case_ids,
+        },
+    }
+
+
+def load_dataset(dataset_path=DATASET_PATH, schema_path=EVAL_SCHEMA_PATH):
+    return load_dataset_bundle(dataset_path=dataset_path, schema_path=schema_path)["rows"]
 
 
 def diff_bundle(incumbent, candidate):
@@ -74,12 +133,18 @@ def diff_bundle(incumbent, candidate):
     return changes
 
 
-def evaluate_bundle(bundle_dir, run_id, artifact_dir):
+def evaluate_bundle(bundle_dir, run_id, artifact_dir, dataset_bundle=None):
     bundle = load_bundle(bundle_dir)
     validate_bundle(bundle)
-    dataset = load_dataset()
+    prepared_dataset = dataset_bundle or load_dataset_bundle()
+    dataset = copy.deepcopy(prepared_dataset["rows"])
+    dataset_identity = copy.deepcopy(prepared_dataset["identity"])
     case_results = []
     case_types = set()
+    bundle_identity = {
+        "bundle_path": str(Path(bundle_dir)),
+        "fingerprint": fingerprint_bundle(bundle),
+    }
 
     for case in dataset:
         started = time.perf_counter()
@@ -106,12 +171,21 @@ def evaluate_bundle(bundle_dir, run_id, artifact_dir):
 
     aggregate = aggregate_cases(case_results)
     artifact_dir.mkdir(parents=True, exist_ok=True)
-    (artifact_dir / "summary.json").write_text(json.dumps({"aggregate": aggregate}, indent=2, sort_keys=True))
+    summary_payload = {
+        "aggregate": aggregate,
+        "artifact_format_version": ARTIFACT_FORMAT_VERSION,
+        "dataset_identity": dataset_identity,
+        "bundle_identity": bundle_identity,
+    }
+    (artifact_dir / "summary.json").write_text(json.dumps(summary_payload, indent=2, sort_keys=True))
     (artifact_dir / "cases.json").write_text(json.dumps(case_results, indent=2, sort_keys=True))
     return {
         "run_id": run_id,
         "bundle": bundle,
-        "fingerprint": fingerprint_bundle(bundle),
+        "fingerprint": bundle_identity["fingerprint"],
+        "artifact_format_version": ARTIFACT_FORMAT_VERSION,
+        "dataset_identity": dataset_identity,
+        "bundle_identity": bundle_identity,
         "aggregate": aggregate,
         "cases": case_results,
         "case_types": sorted(case_types),

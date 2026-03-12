@@ -23,16 +23,28 @@ Ship a working offline optimizer loop that can:
 2. Replay an evaluation dataset
 3. Score candidate performance
 4. Accept or reject candidates
-5. Distill lessons from experiment results
+
+Post-proof hardening can then improve:
+
+5. Eval integrity and artifact provenance
+6. Dataset-growth scaffolding
+7. Experiment-memory clarity
 
 ## What Counts As Success
 
-The optimizer must demonstrate:
+The shipped v0.1 proof must demonstrate:
 
 - one bad candidate rejected for the correct reason
 - one no-op candidate rejected
 - one improved candidate accepted
-- at least one repeated failure pattern distilled into a lesson
+
+The post-proof hardening track may then strengthen:
+
+- eval integrity
+- artifact auditability
+- dataset growth scaffolding
+- experiment-memory structure
+- future engine-facing output contracts
 
 ## Current Priorities
 
