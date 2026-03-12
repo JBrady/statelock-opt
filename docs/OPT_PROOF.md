@@ -84,6 +84,17 @@ Those topics now live in:
 - `docs/OPT_MEMORY_HARDENING.md`
 - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
+## Proof Still Holds After Hardening
+
+The first hardening pass was implemented without changing the proof outcome.
+
+The repo now additionally protects the proof with:
+
+- runtime schema validation for replay rows
+- raw-byte dataset and schema fingerprints in artifacts
+- shared dataset identity across incumbent and candidate evaluation inside a single acceptance run
+- regression coverage for case order, per-case scores, aggregate scores, final decision, and proposer stability for the checked-in memory state
+
 ## Read-Only Demo
 
 These commands reproduce the proof without modifying the checked-in incumbent.

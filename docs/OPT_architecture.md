@@ -162,6 +162,7 @@ Important guardrail:
 - eval validation and fingerprinting are semantically read-only
 - the loader must not reorder rows, inject defaults, coerce values, normalize fields, or otherwise transform dataset meaning
 - invalid datasets fail hard
+- dataset and schema hashes are computed from raw file bytes, not parsed or reserialized content
 
 ### Retrieval Layer
 
@@ -306,6 +307,11 @@ Close-call reruns only happen if a candidate is tentatively accepted and the del
 
 That metadata is non-semantic.
 It exists for integrity, provenance, and auditability only.
+
+Compatibility note:
+
+- `evaluate_bundle()` kept its existing decision-relevant fields and return structure intact
+- new metadata was added additively so scoring, aggregation, comparison, and acceptance callers continue to see the same semantic values
 
 The only normal source-of-truth mutation to accepted policy state is replacing `state/incumbent/` after a successful run.
 

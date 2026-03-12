@@ -95,6 +95,26 @@ Supporting hardening references:
 - [docs/OPT_MEMORY_HARDENING.md](docs/OPT_MEMORY_HARDENING.md)
 - [docs/OPT_ENGINE_CONTRACT_SKETCH.md](docs/OPT_ENGINE_CONTRACT_SKETCH.md)
 
+## Post-Proof Hardening Now Present
+
+The repo now includes the first hardening pass around the proof artifact:
+
+- replay rows are validated against `evals/schema.json` before evaluation
+- dataset and schema fingerprints are derived from raw file bytes only
+- one shared dataset identity is reused across incumbent and candidate evaluation inside a single acceptance run
+- `summary.json` and `run.json` now carry additive, non-semantic provenance metadata such as `artifact_format_version`, dataset identity, and bundle identity
+- regression checks preserve proof invariants for case count, case order, per-case scores, aggregate scores, and final accept/reject outcome
+- proposer behavior is still expected to remain unchanged for the same checked-in memory state
+
+The hardening regression suite lives in `tests/test_hardening_regressions.py`.
+
+Recommended verification after behavior changes:
+
+```bash
+uv run python -m compileall src
+uv run python -m unittest discover -s tests -v
+```
+
 ## Reproduce the Proof
 
 Evaluate incumbent:
