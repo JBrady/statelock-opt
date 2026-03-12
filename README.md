@@ -1,5 +1,7 @@
 # StateLock Local Context Optimizer
 
+An offline optimizer that discovers better memory retrieval policies by replaying conversations and scoring results deterministically.
+
 `statelock-opt` is a local, eval-driven optimizer for StateLock-style memory systems. It does not train models. It tests bounded retrieval, context-assembly, and prompt-fragment policies offline, scores them deterministically, and decides whether to accept or reject a candidate configuration.
 
 The problem it solves is simple: memory systems often fail because the retrieval or context policy is wrong, not because the underlying model needs retraining. This repo exists to prove that those policy decisions can be improved through offline replay.
