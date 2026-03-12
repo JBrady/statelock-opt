@@ -19,9 +19,10 @@ Recommended reading order for this subsystem:
 5. `docs/OPT_EVAL_STRATEGY.md`
 6. `docs/OPT_MEMORY_HARDENING.md`
 7. `docs/OPT_EXPERIMENT_REGISTRY.md`
-8. `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
-9. `docs/OPT_BUILD_LOG.md`
-10. `docs/OPT_SHIP_PLAN.md`
+8. `docs/OPT_HYPOTHESES.md`
+9. `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
+10. `docs/OPT_BUILD_LOG.md`
+11. `docs/OPT_SHIP_PLAN.md`
 
 ## Architectural Summary
 
@@ -35,6 +36,7 @@ The system is built around a closed offline loop:
 6. The candidate is accepted or rejected.
 7. Run history is distilled into lightweight experiment memory.
 8. Completed runs are indexed into a lightweight experiment registry.
+9. The registry is summarized into a regenerated exact-signature hypothesis snapshot.
 
 The core entry points are:
 
@@ -126,6 +128,22 @@ The optimizer also keeps an additive audit/index artifact at:
 
 This registry summarizes completed runs and points back to canonical artifacts.
 It does not replace `run.json` and is not a scoring, acceptance, proposer, or memory-refresh input in v1.
+
+### 6. Hypothesis Layer
+
+The optimizer also keeps a regenerated analysis artifact at:
+
+- `artifacts/analysis/hypotheses.jsonl`
+
+This file is derived only from `artifacts/registry/experiments.jsonl`.
+It summarizes exact observed change signatures into deterministic `supported`, `mixed`, `contradicted`, or `inconclusive` beliefs.
+
+Important guardrails:
+
+- it is an analysis artifact, not a proposer-adjacent memory artifact
+- it is regenerated from the full registry rather than appended incrementally
+- it remains non-semantic in v1 and is not read by replay, scoring, acceptance, proposer logic, or memory refresh
+- it stores bounded run references, not a full experiment ledger; the registry remains the canonical complete history
 
 ## End-to-End Evaluation Flow
 

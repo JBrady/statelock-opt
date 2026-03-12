@@ -114,3 +114,17 @@ There is no automatic backfill in v1.
 
 The registry begins with runs completed after implementation.
 This keeps the first version low-risk and avoids heuristic reconstruction of older lesson promotions.
+
+## Relation to Hypotheses
+
+The hypothesis layer is a downstream analysis view derived from the registry:
+
+- `artifacts/analysis/hypotheses.jsonl`
+
+Current separation of responsibilities:
+
+- the registry is the canonical append-only experiment-history source
+- the hypothesis file is a regenerated belief snapshot
+
+To preserve that boundary, the hypothesis layer stores full evidence counts but only small bounded run-reference lists.
+It must not become a second run ledger.

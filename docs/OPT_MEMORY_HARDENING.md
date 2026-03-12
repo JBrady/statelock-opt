@@ -30,8 +30,10 @@ The experiment registry is separate from this memory layer.
 
 - `memory/runs.jsonl` feeds distillation
 - `artifacts/registry/experiments.jsonl` is an additive audit/index artifact
+- `artifacts/analysis/hypotheses.jsonl` is a regenerated downstream belief snapshot
 
 The registry must not become a proposer input in this pass.
+The hypothesis layer must also remain outside proposer inputs in this pass.
 
 ## Lesson Schema
 

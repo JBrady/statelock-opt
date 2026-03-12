@@ -94,6 +94,7 @@ Supporting hardening references:
 - [docs/OPT_EVAL_STRATEGY.md](docs/OPT_EVAL_STRATEGY.md)
 - [docs/OPT_MEMORY_HARDENING.md](docs/OPT_MEMORY_HARDENING.md)
 - [docs/OPT_EXPERIMENT_REGISTRY.md](docs/OPT_EXPERIMENT_REGISTRY.md)
+- [docs/OPT_HYPOTHESES.md](docs/OPT_HYPOTHESES.md)
 - [docs/OPT_ENGINE_CONTRACT_SKETCH.md](docs/OPT_ENGINE_CONTRACT_SKETCH.md)
 
 ## Post-Proof Hardening Now Present
@@ -107,9 +108,11 @@ The repo now includes the first hardening pass around the proof artifact:
 - regression checks preserve proof invariants for case count, case order, per-case scores, aggregate scores, and final accept/reject outcome
 - proposer behavior is still expected to remain unchanged for the same checked-in memory state
 - a lightweight append-only registry now records structured run summaries under `artifacts/registry/experiments.jsonl`
+- a regenerated hypothesis snapshot now records exact-signature beliefs under `artifacts/analysis/hypotheses.jsonl`
 
 The hardening regression suite lives in `tests/test_hardening_regressions.py`.
 The experiment-registry coverage lives in `tests/test_experiment_registry.py`.
+The hypothesis-layer coverage lives in `tests/test_hypotheses.py`.
 
 Recommended verification after behavior changes:
 
@@ -177,7 +180,10 @@ artifacts/               per-run outputs and reports
 program.md               agent instructions for the optimizer loop
 ```
 
-The `artifacts/` tree now also includes `artifacts/registry/experiments.jsonl`, an append-only index of completed runs.
+The `artifacts/` tree now also includes:
+
+- `artifacts/registry/experiments.jsonl`: an append-only index of completed runs
+- `artifacts/analysis/hypotheses.jsonl`: a regenerated exact-signature belief snapshot derived from the registry
 
 ## Design Principles
 
