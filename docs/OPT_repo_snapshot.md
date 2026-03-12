@@ -289,6 +289,8 @@ It does not replace `run.json` or `memory/runs.jsonl`.
 Repo-grounded regression coverage now includes:
 
 - `tests/test_hardening_regressions.py`
+- `tests/test_experiment_registry.py`
+- `tests/test_hypotheses.py`
 
 The current regression suite protects:
 
@@ -298,6 +300,8 @@ The current regression suite protects:
 - final proof accept/reject preservation
 - proposer candidate-selection stability for the checked-in memory state
 - structured lesson promotion in a temporary memory directory
+- append-only registry behavior and registry non-semantic failure handling
+- hypothesis classification, bounded evidence references, and hypothesis non-semantic failure handling
 
 Typical run directory contents:
 
@@ -376,6 +380,7 @@ The repo’s canonical proof commands are the ones documented in `README.md`:
 Recommended verification commands from `AGENTS.md`:
 
 - `uv run python -m compileall src`
+- `uv run python -m unittest discover -s tests -v`
 - candidate evaluation via `evaluate_bundle`
 - acceptance check via `python -m statelock_opt.run`
 

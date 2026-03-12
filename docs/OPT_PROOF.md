@@ -83,6 +83,7 @@ Those topics now live in:
 - `docs/OPT_EVAL_STRATEGY.md`
 - `docs/OPT_MEMORY_HARDENING.md`
 - `docs/OPT_EXPERIMENT_REGISTRY.md`
+- `docs/OPT_HYPOTHESES.md`
 - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
 ## Proof Still Holds After Hardening
@@ -95,6 +96,13 @@ The repo now additionally protects the proof with:
 - raw-byte dataset and schema fingerprints in artifacts
 - shared dataset identity across incumbent and candidate evaluation inside a single acceptance run
 - regression coverage for case order, per-case scores, aggregate scores, final decision, and proposer stability for the checked-in memory state
+
+It also now derives two downstream, non-semantic analysis layers after completed runs:
+
+- an append-only experiment registry under `artifacts/registry/experiments.jsonl`
+- a regenerated exact-signature hypothesis snapshot under `artifacts/analysis/hypotheses.jsonl`
+
+Those layers improve auditability and legibility, but they do not change the proof result or the acceptance semantics that produced it.
 
 ## Read-Only Demo
 

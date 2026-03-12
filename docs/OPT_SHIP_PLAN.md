@@ -49,6 +49,9 @@ The post-proof hardening track may then strengthen:
 - future engine-facing output contracts
 - proof-preservation regression checks
 
+The registry and hypothesis layers should remain downstream-only in this track.
+They improve auditability and analysis, but they must not become scoring, acceptance, or proposer inputs unless a later scoped change explicitly does that work.
+
 ## Current Priorities
 
 Focus only on components that make the optimizer trustworthy:

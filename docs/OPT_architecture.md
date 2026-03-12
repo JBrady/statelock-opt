@@ -326,6 +326,7 @@ Close-call reruns only happen if a candidate is tentatively accepted and the del
 - appends the run to experiment memory
 - refreshes distilled memory
 - appends a registry summary entry under `artifacts/registry/`
+- regenerates a hypothesis snapshot under `artifacts/analysis/` from the registry
 - if accepted, copies the candidate bundle into the incumbent directory and snapshots the prior incumbent
 
 `run.json` now carries additive artifact metadata such as:
@@ -378,6 +379,7 @@ Additional reference docs introduced in the hardening pass:
 - `docs/OPT_EVAL_STRATEGY.md`
 - `docs/OPT_MEMORY_HARDENING.md`
 - `docs/OPT_EXPERIMENT_REGISTRY.md`
+- `docs/OPT_HYPOTHESES.md`
 - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
 ## Determinism and Reproducibility

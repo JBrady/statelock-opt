@@ -52,6 +52,8 @@ Out of scope by default:
 - tests/test_experiment_registry.py
 - tests/test_hypotheses.py
 - src/statelock_opt/run.py
+- src/statelock_opt/registry.py
+- src/statelock_opt/hypotheses.py
 - src/statelock_opt/replay.py
 - src/statelock_opt/proposer.py
 - src/statelock_opt/scorer.py
@@ -89,6 +91,8 @@ If the user says `Bootstrap yourself`, or says to read `AGENTS.md` and follow th
    - `state/candidates/proof_top_k_final_4/`
 3. Inspect the key optimizer architecture files:
    - `src/statelock_opt/run.py`
+   - `src/statelock_opt/registry.py`
+   - `src/statelock_opt/hypotheses.py`
    - `src/statelock_opt/replay.py`
    - `src/statelock_opt/scorer.py`
    - `src/statelock_opt/proposer.py`
