@@ -64,7 +64,7 @@ That command:
 2. replays the fixed eval dataset
 3. compares it with the incumbent config
 4. accepts or rejects the candidate
-5. writes run history and distilled experiment memory updates
+5. writes run history, distilled experiment memory updates, registry summaries, and a regenerated hypothesis snapshot
 
 To generate a new candidate from the incumbent plus priors:
 
