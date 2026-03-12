@@ -15,9 +15,8 @@ queue/
 # macOS Finder metadata
 .DS_Store
 
-# Agent prompt files (generated per-session by launchers)
+# Local agent prompt files (generated per-session by launchers)
 CLAUDE.md
-AGENTS.md
 
 # Experimental code/artifacts
 dev/
