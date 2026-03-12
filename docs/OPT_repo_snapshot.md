@@ -48,12 +48,14 @@ Current repo work is focused on post-proof hardening rather than new optimizer b
 - `artifacts/reports/`: ad hoc evaluation outputs
 - `artifacts/runs/`: acceptance-run artifacts
 - `artifacts/registry/`: append-only experiment index
+- `artifacts/analysis/`: regenerated hypothesis snapshot
 - `docs/`: proof notes, build log, ship plan, bootstrap notes, and now repo-level reference docs
 - new hardening references:
   - `docs/OPT_HARDENING_AUDIT.md`
   - `docs/OPT_EVAL_STRATEGY.md`
   - `docs/OPT_MEMORY_HARDENING.md`
   - `docs/OPT_EXPERIMENT_REGISTRY.md`
+  - `docs/OPT_HYPOTHESES.md`
   - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 - `README.md`: public project overview and reproducible proof commands
 - `program.md`: operational instructions for the optimizer loop
@@ -76,6 +78,7 @@ Runtime package modules present:
 - `constants.py`
 - `dedupe.py`
 - `distill.py`
+- `hypotheses.py`
 - `model_adapter.py`
 - `prompt_render.py`
 - `proposer.py`
@@ -83,6 +86,7 @@ Runtime package modules present:
 - `retrieve_lexical.py`
 - `run.py`
 - `scorer.py`
+- `signatures.py`
 
 There is also a `__pycache__/` directory from local compilation.
 
@@ -244,6 +248,7 @@ Artifacts are divided into:
 - `artifacts/reports/`: one-off evaluation outputs
 - `artifacts/runs/`: acceptance-run directories created by `python -m statelock_opt.run`
 - `artifacts/registry/`: additive run-summary index
+- `artifacts/analysis/`: regenerated exact-signature belief snapshot
 
 Observed counts on March 12, 2026:
 
@@ -256,6 +261,12 @@ Typical report directory contents:
 - `cases.json`
 
 `summary.json` now also carries additive artifact metadata for dataset identity, bundle identity, and artifact format version.
+
+The hypothesis layer now derives:
+
+- `artifacts/analysis/hypotheses.jsonl`
+
+It is regenerated from the registry, remains non-semantic in v1, and stores bounded run references rather than a second full experiment ledger.
 
 Typical top-level `run.json` contents now also include:
 

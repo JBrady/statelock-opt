@@ -43,6 +43,7 @@ The post-proof hardening track may then strengthen:
 - eval integrity
 - artifact auditability
 - append-only experiment registry coverage
+- exact-signature hypothesis tracking
 - dataset growth scaffolding
 - experiment-memory structure
 - future engine-facing output contracts

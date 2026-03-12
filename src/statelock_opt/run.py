@@ -9,6 +9,7 @@ from uuid import uuid4
 from .accept import compare_runs
 from .constants import ARTIFACTS_DIR, ARTIFACT_FORMAT_VERSION, CLOSE_CALL_RERUNS, INCUMBENT_DIR, MEMORY_DIR
 from .distill import append_run_record, refresh_memory
+from .hypotheses import refresh_hypotheses
 from .registry import append_registry_record, build_registry_record, load_jsonl_rows
 from .replay import diff_bundle, evaluate_bundle, load_bundle, load_dataset_bundle, validate_bundle
 
@@ -158,6 +159,7 @@ def main():
         lesson_attribution_failed = True
 
     registry_path = ARTIFACTS_DIR.parent / "registry" / "experiments.jsonl"
+    hypotheses_path = ARTIFACTS_DIR.parent / "analysis" / "hypotheses.jsonl"
     try:
         registry_record = build_registry_record(
             record,
@@ -170,6 +172,11 @@ def main():
         appended = append_registry_record(registry_path, registry_record)
         if not appended:
             print(f"Registry append skipped for duplicate run_id {run_stamp}.", file=sys.stderr)
+        else:
+            try:
+                refresh_hypotheses(registry_path, hypotheses_path)
+            except Exception as exc:
+                print(f"Hypothesis refresh failed after run {run_stamp}: {exc}", file=sys.stderr)
     except Exception as exc:
         print(f"Registry append failed for run {run_stamp}: {exc}", file=sys.stderr)
 
