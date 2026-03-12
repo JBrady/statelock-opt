@@ -25,6 +25,9 @@ Verified proof numbers on March 12, 2026:
 
 The proof is documented in `docs/OPT_PROOF.md`.
 
+The core proof is complete.
+Current repo work is focused on post-proof hardening rather than new optimizer behavior.
+
 ## Top-Level Inventory
 
 ### Source and Configuration
@@ -45,6 +48,11 @@ The proof is documented in `docs/OPT_PROOF.md`.
 - `artifacts/reports/`: ad hoc evaluation outputs
 - `artifacts/runs/`: acceptance-run artifacts
 - `docs/`: proof notes, build log, ship plan, bootstrap notes, and now repo-level reference docs
+- new hardening references:
+  - `docs/OPT_HARDENING_AUDIT.md`
+  - `docs/OPT_EVAL_STRATEGY.md`
+  - `docs/OPT_MEMORY_HARDENING.md`
+  - `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 - `README.md`: public project overview and reproducible proof commands
 - `program.md`: operational instructions for the optimizer loop
 
@@ -191,6 +199,12 @@ The runtime also derives five coarse case-type labels during evaluation:
 - `distractor_retrieval`
 - `missing_evidence_refusal`
 
+Post-hardening eval integrity notes:
+
+- runtime validates dataset rows against `schema.json`
+- dataset identity is derived from the raw bytes of `dataset.jsonl` and `schema.json`
+- optional `case_metadata` exists for taxonomy and proof-role scaffolding only
+
 ### `memory/`
 
 Files present:
@@ -217,6 +231,8 @@ Observed state on March 12, 2026:
 
 This means the repository has early failure memory but has not yet accumulated promoted lessons in the current checked-in state.
 
+Lesson schema is now more explicit, but the checked-in memory state is still intentionally sparse.
+
 ### `artifacts/`
 
 Artifacts are divided into:
@@ -234,6 +250,8 @@ Typical report directory contents:
 - `summary.json`
 - `cases.json`
 
+`summary.json` now also carries additive artifact metadata for dataset identity, bundle identity, and artifact format version.
+
 Typical run directory contents:
 
 - `incumbent_1/summary.json`
@@ -243,6 +261,8 @@ Typical run directory contents:
 - `run.json`
 
 Accepted runs may also contain `previous_incumbent/` with the prior accepted bundle snapshot.
+
+`run.json` now also carries additive artifact metadata for shared dataset identity and incumbent/candidate bundle identity.
 
 ## Behaviorally Important Code Facts
 
@@ -257,6 +277,9 @@ The current stack is fully local and deterministic:
 - deterministic scoring in `scorer.py`
 
 There is no external model or network dependency in the evaluation path.
+
+Eval validation and fingerprinting are non-semantic hardening metadata.
+They must not alter scoring or acceptance behavior.
 
 ### Acceptance Rules
 
@@ -290,6 +313,7 @@ This is important for interpreting how much leverage prompt changes have in v0.1
 - package name: `statelock-opt`
 - version: `0.1.0`
 - Python requirement: `>=3.10`
+- runtime dependency: `jsonschema>=4.25.1`
 - runtime dependency: `pyyaml>=6.0.2`
 
 Setuptools is used for packaging, with source under `src/`.

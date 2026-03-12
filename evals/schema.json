@@ -56,6 +56,29 @@
         "forbidden_support_ids"
       ]
     },
+    "case_metadata": {
+      "type": "object",
+      "properties": {
+        "case_family": {
+          "type": "string",
+          "enum": [
+            "direct_recall",
+            "partial_evidence",
+            "conflict_resolution",
+            "distractor_retrieval",
+            "missing_evidence_refusal"
+          ]
+        },
+        "proof_role": {
+          "type": "string",
+          "enum": ["baseline", "wedge", "guardrail", "regression"]
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      }
+    },
     "distractor_ids": {
       "type": "array",
       "items": {"type": "string"}

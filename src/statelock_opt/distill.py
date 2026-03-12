@@ -38,6 +38,44 @@ def _change_signature(changed_fields):
     return "|".join(parts)
 
 
+def _lesson_scope(grouped_runs):
+    return {"case_types": sorted({tag for run in grouped_runs for tag in run.get("case_types", [])})}
+
+
+def _positive_lesson(sample, grouped_runs, promotion_rule, lesson_index):
+    improvements = [
+        metric
+        for metric, delta in sample["metric_deltas"].items()
+        if delta > 0.03 and metric not in {"false_refusal_rate", "unsupported_answer_rate"}
+    ]
+    harms = [metric for metric, delta in sample["metric_deltas"].items() if delta < -0.03]
+    return {
+        "lesson_id": f"lesson_{lesson_index:03d}",
+        "lesson_type": "positive",
+        "status": "active",
+        "scope": _lesson_scope(grouped_runs),
+        "pattern": sample["changed_fields"],
+        "observed_effect": {"improves": improvements, "hurts": harms},
+        "evidence_runs": [run["run_id"] for run in grouped_runs],
+        "confidence": round(min(0.55 + 0.1 * len(grouped_runs), 0.95), 2),
+        "promotion_rule": promotion_rule,
+    }
+
+
+def _negative_lesson(sample, grouped_runs, lesson_index):
+    return {
+        "lesson_id": f"lesson_{lesson_index:03d}",
+        "lesson_type": "negative",
+        "status": "active",
+        "scope": _lesson_scope(grouped_runs),
+        "pattern": sample.get("changed_fields", {}),
+        "observed_effect": {"reason": sample["decision"]["reason"]},
+        "evidence_runs": [run["run_id"] for run in grouped_runs],
+        "confidence": round(min(0.55 + 0.08 * len(grouped_runs), 0.9), 2),
+        "promotion_rule": "repeated_rejected_pattern",
+    }
+
+
 def refresh_memory(memory_dir):
     runs = _load_jsonl(memory_dir / "runs.jsonl")
     accepted_runs = [run for run in runs if run["decision"]["accepted"]]
@@ -59,23 +97,14 @@ def refresh_memory(memory_dir):
     for signature, grouped_runs in success_groups.items():
         if len(grouped_runs) >= 2 or any(run["decision"]["delta"] >= LARGE_WIN_DELTA for run in grouped_runs):
             sample = grouped_runs[-1]
-            improvements = [
-                metric
-                for metric, delta in sample["metric_deltas"].items()
-                if delta > 0.03 and metric not in {"false_refusal_rate", "unsupported_answer_rate"}
-            ]
-            harms = [metric for metric, delta in sample["metric_deltas"].items() if delta < -0.03]
-            lessons.append(
-                {
-                    "lesson_id": f"lesson_{len(lessons) + 1:03d}",
-                    "scope": {"case_types": sorted({tag for run in grouped_runs for tag in run.get("case_types", [])})},
-                    "pattern": sample["changed_fields"],
-                    "observed_effect": {"improves": improvements, "hurts": harms},
-                    "evidence_runs": [run["run_id"] for run in grouped_runs],
-                    "confidence": round(min(0.55 + 0.1 * len(grouped_runs), 0.95), 2),
-                    "status": "active",
-                }
-            )
+            promotion_rule = "large_accepted_win" if any(
+                run["decision"]["delta"] >= LARGE_WIN_DELTA for run in grouped_runs
+            ) else "repeated_accepted_pattern"
+            lessons.append(_positive_lesson(sample, grouped_runs, promotion_rule, len(lessons) + 1))
+
+    for signature, grouped_runs in failure_groups.items():
+        if signature and len(grouped_runs) >= 3:
+            lessons.append(_negative_lesson(grouped_runs[-1], grouped_runs, len(lessons) + 1))
 
     lessons = lessons[:MAX_ACTIVE_LESSONS]
     _write_jsonl(memory_dir / "lessons.jsonl", lessons)

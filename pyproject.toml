@@ -5,6 +5,7 @@ description = "Local eval-driven optimizer for StateLock-style memory systems"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "jsonschema>=4.25.1",
     "pyyaml>=6.0.2",
 ]
 
@@ -17,4 +18,3 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

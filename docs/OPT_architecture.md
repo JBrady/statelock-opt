@@ -14,9 +14,13 @@ Recommended reading order for this subsystem:
 
 1. `docs/OPT_architecture.md`
 2. `docs/OPT_repo_snapshot.md`
-3. `docs/OPT_PROOF.md`
-4. `docs/OPT_BUILD_LOG.md`
-5. `docs/OPT_SHIP_PLAN.md`
+3. `docs/OPT_HARDENING_AUDIT.md`
+4. `docs/OPT_PROOF.md`
+5. `docs/OPT_EVAL_STRATEGY.md`
+6. `docs/OPT_MEMORY_HARDENING.md`
+7. `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
+8. `docs/OPT_BUILD_LOG.md`
+9. `docs/OPT_SHIP_PLAN.md`
 
 ## Architectural Summary
 
@@ -79,7 +83,15 @@ Runtime validation happens in `src/statelock_opt/replay.py::validate_bundle`, us
 
 The benchmark lives in `evals/dataset.jsonl`, with the expected shape documented in `evals/schema.json`.
 
-Important nuance: the runtime loads JSONL directly and does not enforce the JSON schema during execution. The schema is documentation and validation reference, not an active gate in the current code path.
+The runtime now validates replay rows against `evals/schema.json` before evaluation.
+
+Eval integrity metadata is derived from the raw file bytes of:
+
+- `evals/dataset.jsonl`
+- `evals/schema.json`
+
+That metadata is audit and provenance information only.
+It is not a scoring or acceptance input.
 
 ### 3. Prompt Surface
 
@@ -142,8 +154,14 @@ Important details:
 
 Per-eval outputs are:
 
-- `summary.json`: aggregate metrics
+- `summary.json`: aggregate metrics plus additive artifact metadata
 - `cases.json`: case-level results, selected ids, response, and metrics
+
+Important guardrail:
+
+- eval validation and fingerprinting are semantically read-only
+- the loader must not reorder rows, inject defaults, coerce values, normalize fields, or otherwise transform dataset meaning
+- invalid datasets fail hard
 
 ### Retrieval Layer
 
@@ -269,13 +287,25 @@ Close-call reruns only happen if a candidate is tentatively accepted and the del
 `src/statelock_opt/run.py` orchestrates the full comparison:
 
 - reserves a unique run artifact directory
+- captures dataset identity once per acceptance run
 - evaluates incumbent and candidate
 - optionally reruns close calls
+- verifies incumbent-side and candidate-side dataset identity match within the run
 - diffs changed fields
 - writes `run.json`
 - appends the run to experiment memory
 - refreshes distilled memory
 - if accepted, copies the candidate bundle into the incumbent directory and snapshots the prior incumbent
+
+`run.json` now carries additive artifact metadata such as:
+
+- `artifact_format_version`
+- shared dataset identity
+- incumbent bundle identity
+- candidate bundle identity
+
+That metadata is non-semantic.
+It exists for integrity, provenance, and auditability only.
 
 The only normal source-of-truth mutation to accepted policy state is replacing `state/incumbent/` after a successful run.
 
@@ -284,12 +314,14 @@ The only normal source-of-truth mutation to accepted policy state is replacing `
 `src/statelock_opt/distill.py` derives lightweight guidance from run history:
 
 - promotes accepted repeated wins or large wins into `lessons.jsonl`
+- promotes repeated rejected signatures into structured negative lessons when evidence is strong enough
 - blocks repeatedly failing signatures in `bad_regions.yaml`
 - records latency-heavy patterns in `known_slow.yaml`
 - derives favored exact values in `priors.yaml`
 - records recurring metric tradeoffs and failure reasons
 
 This makes the proposer stateful without broadening the optimizer beyond local files.
+In the current hardening pass, lesson structure became richer, but proposer search behavior was intentionally left unchanged.
 
 ## Repository Structure by Role
 
@@ -303,6 +335,13 @@ This makes the proposer stateful without broadening the optimizer beyond local f
 - `artifacts/reports/`: ad hoc evaluation outputs
 - `artifacts/runs/`: acceptance-run artifacts
 - `docs/`: proof, build log, ship plan, and repo documentation
+
+Additional reference docs introduced in the hardening pass:
+
+- `docs/OPT_HARDENING_AUDIT.md`
+- `docs/OPT_EVAL_STRATEGY.md`
+- `docs/OPT_MEMORY_HARDENING.md`
+- `docs/OPT_ENGINE_CONTRACT_SKETCH.md`
 
 ## Determinism and Reproducibility
 

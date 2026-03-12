@@ -35,6 +35,7 @@ Out of scope by default:
 
 - README.md
 - docs/statelock_vision.md
+- docs/OPT_HARDENING_AUDIT.md
 - docs/OPT_PROOF.md
 - docs/OPT_BUILD_LOG.md
 - docs/STATELOCK-OPT_SESSION_2026_03_11_CODEX_BOOTSTRAP.md
@@ -60,6 +61,7 @@ If the user says `Bootstrap yourself`, or says to read `AGENTS.md` and follow th
 1. Read:
    - `docs/OPT_architecture.md`
    - `docs/OPT_repo_snapshot.md`
+   - `docs/OPT_HARDENING_AUDIT.md`
    - `README.md`
    - `docs/OPT_PROOF.md`
    - `docs/OPT_BUILD_LOG.md`
